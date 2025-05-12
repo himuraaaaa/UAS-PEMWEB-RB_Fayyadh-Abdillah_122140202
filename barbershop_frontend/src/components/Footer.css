@@ -1,0 +1,152 @@
+/* Footer.css */
+.footer {
+  background-color: #37322E;
+  color: #fff;
+  padding: 70px 0 20px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  margin-bottom: 50px;
+}
+
+.footer-logo h2 {
+  font-size: 28px;
+  color: #B34B0C;
+  margin-bottom: 15px;
+}
+
+.footer-logo p {
+  color: #B3B2B0;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.social-links {
+  display: flex;
+  gap: 15px;
+}
+
+.social-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(179, 75, 12, 0.1);
+  border-radius: 50%;
+  color: #B34B0C;
+  transition: all 0.3s ease;
+}
+
+.social-links a:hover {
+  background-color: #B34B0C;
+  color: white;
+  transform: translateY(-5px);
+}
+
+.footer-links h3,
+.footer-contact h3,
+.footer-newsletter h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.footer-links h3:after,
+.footer-contact h3:after,
+.footer-newsletter h3:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 2px;
+  background-color: #B34B0C;
+}
+
+.footer-links ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links li {
+  margin-bottom: 10px;
+}
+
+.footer-links a {
+  color: #B3B2B0;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: #B34B0C;
+  padding-left: 5px;
+}
+
+.footer-contact p {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  color: #B3B2B0;
+}
+
+.footer-contact i {
+  color: #B34B0C;
+  margin-right: 10px;
+  width: 20px;
+}
+
+.newsletter-form {
+  display: flex;
+  margin-top: 20px;
+}
+
+.newsletter-form input {
+  flex: 1;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 5px 0 0 5px;
+  font-size: 14px;
+}
+
+.newsletter-form button {
+  background-color: #B34B0C;
+  color: white;
+  border: none;
+  padding: 0 15px;
+  border-radius: 0 5px 5px 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.newsletter-form button:hover {
+  background-color: #7C3306;
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(179, 178, 176, 0.2);
+}
+
+.footer-bottom p {
+  color: #B3B2B0;
+  font-size: 14px;
+}
+
+@media screen and (max-width: 992px) {
+  .footer-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+  }
+}

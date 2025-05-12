@@ -1,0 +1,134 @@
+/* Navbar.css */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background-color: transparent;
+  transition: all 0.3s ease;
+  padding: 15px 0;
+}
+
+.navbar.scrolled {
+  background-color: #37322E;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 10px 0;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.logo h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #B34B0C;
+  margin: 0;
+}
+
+.nav-menu {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.nav-item {
+  margin: 0 15px;
+}
+
+.nav-item a, .nav-item Link {
+  text-decoration: none;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.nav-item a:hover, .nav-item Link:hover {
+  color: #B34B0C;
+}
+
+.nav-item.book a, .nav-item.book Link {
+  background-color: #B34B0C;
+  padding: 10px 20px;
+  border-radius: 5px;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.nav-item.book a:hover, .nav-item.book Link:hover {
+  background-color: #7C3306;
+  color: white;
+}
+
+.nav-item.login a {
+  color: #B34B0C;
+  font-weight: 600;
+}
+
+.menu-icon {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 21px;
+  cursor: pointer;
+}
+
+.menu-icon span {
+  height: 3px;
+  width: 100%;
+  background-color: #B34B0C;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+@media screen and (max-width: 960px) {
+  .menu-icon {
+    display: flex;
+  }
+
+  .nav-menu {
+    position: absolute;
+    top: 70px;
+    left: -100%;
+    flex-direction: column;
+    width: 100%;
+    background-color: #37322E;
+    padding: 20px 0;
+    transition: all 0.5s ease;
+    opacity: 0;
+  }
+
+  .nav-menu.active {
+    left: 0;
+    opacity: 1;
+  }
+
+  .nav-item {
+    margin: 15px 0;
+    text-align: center;
+    width: 100%;
+  }
+
+  .menu-icon.active span:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+  }
+
+  .menu-icon.active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .menu-icon.active span:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+  }
+}
