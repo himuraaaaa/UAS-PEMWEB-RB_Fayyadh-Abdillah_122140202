@@ -1,53 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import BarberProfile from '../../../components/BarberProfile/BarberProfile';
+import { getBarbers } from '../../../api/barberApi';
 
 const AboutSection = () => {
-  const teamMembers = [
-    {
-      id: 1,
-      name: 'John Doe',
-      position: 'Master Barber',
-      image: '/assets/images/barber-1.jpg',
-      social: {
-        instagram: '#',
-        facebook: '#',
-        twitter: '#'
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBarbers = async () => {
+      try {
+        const data = await getBarbers();
+        setTeamMembers(data);
+      } catch (error) {
+        console.error('Error fetching barbers:', error);
+      } finally {
+        setLoading(false);
       }
-    },
-    {
-      id: 2,
-      name: 'Mike Smith',
-      position: 'Senior Barber',
-      image: '/assets/images/barber-2.jpg',
-      social: {
-        instagram: '#',
-        facebook: '#',
-        twitter: '#'
-      }
-    },
-    {
-      id: 3,
-      name: 'David Wilson',
-      position: 'Style Expert',
-      image: '/assets/images/barber-3.jpg',
-      social: {
-        instagram: '#',
-        facebook: '#',
-        twitter: '#'
-      }
-    },
-    {
-      id: 4,
-      name: 'Robert Johnson',
-      position: 'Junior Barber',
-      image: '/assets/images/barber-4.jpg',
-      social: {
-        instagram: '#',
-        facebook: '#',
-        twitter: '#'
-      }
-    }
-  ];
+    };
+
+    fetchBarbers();
+  }, []);
+
+  if (loading) {
+    return (
+      <section id="about" className="about-section">
+        <div className="container">
+          <p>Loading team members...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="about" className="about-section">

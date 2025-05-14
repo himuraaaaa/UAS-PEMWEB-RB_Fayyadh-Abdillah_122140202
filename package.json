@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "react-router-dom": "^7.6.0",
+    "react-scroll": "^1.9.3"
+  }
+}

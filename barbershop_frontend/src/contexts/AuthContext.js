@@ -8,6 +8,15 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [bookingData, setBookingData] = useState({
+    service: null,
+    barber: null,
+    date: '',
+    time: '',
+    name: '',
+    email: '',
+    phone: ''
+  });
 
   // Check if user is logged in on initial load
   useEffect(() => {
@@ -39,13 +48,33 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setCurrentUser(null);
+    // Reset booking data on logout
+    setBookingData({
+      service: null,
+      barber: null,
+      date: '',
+      time: '',
+      name: '',
+      email: '',
+      phone: ''
+    });
+  };
+
+  // Update booking data
+  const updateBookingData = (data) => {
+    setBookingData(prev => ({
+      ...prev,
+      ...data
+    }));
   };
 
   const value = {
     currentUser,
     login,
     logout,
-    isAuthenticated: !!currentUser
+    isAuthenticated: !!currentUser,
+    bookingData,
+    updateBookingData
   };
 
   return (

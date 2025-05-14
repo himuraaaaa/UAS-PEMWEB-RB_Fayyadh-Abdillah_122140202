@@ -1,5 +1,6 @@
+// src/pages/Login/Login.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../../api/authApi';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/Button/Button';
@@ -13,7 +14,12 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login: authLogin } = useAuth();
+  
+  // Check if there's a redirect path in the URL (e.g., ?redirect=/booking/services)
+  const searchParams = new URLSearchParams(location.search);
+  const redirectPath = searchParams.get('redirect') || '/';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,7 +38,7 @@ const Login = () => {
       const response = await login(credentials);
       if (response.success) {
         authLogin(response.user, response.token);
-        navigate('/');
+        navigate(redirectPath);
       } else {
         setError('Failed to log in. Please check your credentials.');
       }

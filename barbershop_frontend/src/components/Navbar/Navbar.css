@@ -128,3 +128,17 @@
     transform: translateY(-9px) rotate(-45deg);
   }
 }
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+}
+
+.logout-btn:hover {
+  color: var(--secondary-color);
+}

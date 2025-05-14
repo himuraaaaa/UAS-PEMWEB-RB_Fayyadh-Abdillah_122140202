@@ -14,7 +14,6 @@ const Home = () => {
       <ServicesSection />
       <GallerySection />
       <AboutSection />
-      <BookingSection />
       <ContactSection />
     </main>
   );

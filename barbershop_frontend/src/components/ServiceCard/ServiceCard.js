@@ -1,9 +1,12 @@
+// Lanjutan src/components/ServiceCard/ServiceCard.js
 import React from 'react';
-import { Link } from 'react-scroll';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import './ServiceCard.css';
 
 const ServiceCard = ({ service }) => {
   const { title, description, price, icon } = service;
+  const { isAuthenticated } = useAuth();
   
   return (
     <div className="service-card">
@@ -13,9 +16,11 @@ const ServiceCard = ({ service }) => {
       <h3>{title}</h3>
       <p>{description}</p>
       <div className="service-price">{price}</div>
-      <Link to="booking" className="service-btn" spy={true} smooth={true} offset={-70} duration={500}>
-        Book Now
-      </Link>
+      {isAuthenticated ? (
+        <Link to="/booking/services" className="service-btn">Book Now</Link>
+      ) : (
+        <Link to="/login?redirect=/booking/services" className="service-btn">Login to Book</Link>
+      )}
     </div>
   );
 };
