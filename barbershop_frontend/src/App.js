@@ -1,26 +1,17 @@
-// App.js
+// src/App.js
 import React from 'react';
-import Navbar from './components/Navbar';
-import Home from './components/Home';
-import Services from './components/Services';
-import Gallery from './components/Gallery';
-import AboutUs from './components/AboutUs';
-import ContactUs from './components/ContactUs';
-import Footer from './components/Footer';
-import './App.css';
+import { AuthProvider } from './contexts/AuthContext';
+import AppRoutes from './routes/AppRoutes';
+import './assets/styles/global.css';
 
 function App() {
   return (
-    <div className="App">
-      <Navbar />
-      <Home />
-      <Services />
-      <Gallery />
-      <AboutUs />
-      <ContactUs />
-      <Footer />
-    </div>
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 
 export default App;
+
+

@@ -1,22 +1,36 @@
-/* index.css */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
-
-:root {
-  --primary-color: #B34B0C;
-  --secondary-color: #7C3306;
-  --dark-color: #37322E;
-  --light-color: #B3B2B0;
+/* Custom icons for services */
+.icon-scissors:before {
+  font-family: 'Font Awesome 5 Free';
+  content: '\f0c4';
+  font-weight: 900;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+.icon-razor:before {
+  font-family: 'Font Awesome 5 Free';
+  content: '\f52b';
+  font-weight: 900;
 }
 
-body {
-  font-family: 'Poppins', sans-serif;
-  line-height: 1.6;
-  color: #333;
+.icon-towel:before {
+  font-family: 'Font Awesome 5 Free';
+  content: '\f7b7';
+  font-weight: 900;
+}
+
+.icon-color:before {
+  font-family: 'Font Awesome 5 Free';
+  content: '\f53f';
+  font-weight: 900;
+}
+
+.icon-kid:before {
+  font-family: 'Font Awesome 5 Free';
+  content: '\f1ae';
+  font-weight: 900;
+}
+
+.icon-treatment:before {
+  font-family: 'Font Awesome 5 Free';
+  content: '\f5bb';
+  font-weight: 900;
 }

@@ -1,4 +1,3 @@
-// Navbar.js
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-scroll';
 import './Navbar.css';
@@ -28,7 +27,7 @@ const Navbar = () => {
 
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <div className="navbar-container">
+      <div className="container navbar-container">
         <div className="logo">
           <h1>BarberStyle</h1>
         </div>

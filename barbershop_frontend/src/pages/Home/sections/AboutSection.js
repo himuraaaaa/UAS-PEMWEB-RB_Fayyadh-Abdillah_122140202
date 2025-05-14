@@ -1,8 +1,7 @@
-// AboutUs.js
 import React from 'react';
-import './AboutUs.css';
+import BarberProfile from '../../../components/BarberProfile/BarberProfile';
 
-const AboutUs = () => {
+const AboutSection = () => {
   const teamMembers = [
     {
       id: 1,
@@ -94,18 +93,7 @@ const AboutUs = () => {
           <h3>Meet Our Team</h3>
           <div className="team-grid">
             {teamMembers.map(member => (
-              <div className="team-member" key={member.id}>
-                <div className="member-image">
-                  <img src={member.image} alt={member.name} />
-                  <div className="member-social">
-                    <a href={member.social.instagram}><i className="fab fa-instagram"></i></a>
-                    <a href={member.social.facebook}><i className="fab fa-facebook-f"></i></a>
-                    <a href={member.social.twitter}><i className="fab fa-twitter"></i></a>
-                  </div>
-                </div>
-                <h4>{member.name}</h4>
-                <p>{member.position}</p>
-              </div>
+              <BarberProfile key={member.id} barber={member} />
             ))}
           </div>
         </div>
@@ -114,4 +102,4 @@ const AboutUs = () => {
   );
 };
 
-export default AboutUs;
+export default AboutSection;

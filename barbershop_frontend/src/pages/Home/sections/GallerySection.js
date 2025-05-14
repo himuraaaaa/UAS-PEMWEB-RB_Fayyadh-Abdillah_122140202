@@ -1,8 +1,7 @@
-// Gallery.js
 import React, { useState } from 'react';
-import './Gallery.css';
+import GalleryItem from '../../../components/GalleryItem/GalleryItem';
 
-const Gallery = () => {
+const GallerySection = () => {
   const galleryImages = [
     {
       id: 1,
@@ -97,12 +96,7 @@ const Gallery = () => {
         
         <div className="gallery-grid">
           {filteredImages.map(image => (
-            <div className="gallery-item" key={image.id}>
-              <img src={image.src} alt={image.alt} />
-              <div className="gallery-overlay">
-                <h3>{image.alt}</h3>
-              </div>
-            </div>
+            <GalleryItem key={image.id} image={image} />
           ))}
         </div>
       </div>
@@ -110,4 +104,4 @@ const Gallery = () => {
   );
 };
 
-export default Gallery;
+export default GallerySection;
