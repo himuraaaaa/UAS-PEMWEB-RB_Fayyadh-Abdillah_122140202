@@ -1,52 +1,51 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; 
+import { useAuth } from '../../contexts/AuthContext';
 import { submitBooking } from '../../api/bookingApi';
-import Button from '../Button/Button';
 import './BookingForm.css';
 
 const BookingForm = () => {
-  const [bookingData, setBookingData] = useState({
-    service: '',
-    barber: '',
-    date: '',
-    time: '',
-    name: '',
-    email: '',
-    phone: ''
+  const navigate = useNavigate(); // Panggil useNavigate
+  const { bookingData, updateBookingData, currentUser } = useAuth();
+  const [formData, setFormData] = useState({
+    date: bookingData.date || '',
+    time: bookingData.time || '',
+    name: bookingData.name || currentUser?.name || '',
+    email: bookingData.email || currentUser?.email || '',
+    phone: bookingData.phone || currentUser?.phone || '',
+    notes: bookingData.notes || ''
   });
   const [loading, setLoading] = useState(false);
-  const [services, setServices] = useState([
-    'Classic Haircut',
-    'Beard Trim',
-    'Hot Towel Shave',
-    'Hair Coloring',
-    'Kids Haircut',
-    'Hair Treatment'
-  ]);
+  const [timeSlots, setTimeSlots] = useState([]);
 
-  const barbers = [
-    'John Doe',
-    'Mike Smith',
-    'David Wilson',
-    'Robert Johnson'
-  ];
+  useEffect(() => {
+    if (!bookingData.service) {
+      navigate('/booking/services');
+    } else if (!bookingData.barber) {
+      navigate('/booking/barbers');
+    }
+  }, [bookingData.service, bookingData.barber, navigate]);
 
-  const timeSlots = [
-    '09:00 AM',
-    '10:00 AM',
-    '11:00 AM',
-    '12:00 PM',
-    '01:00 PM',
-    '02:00 PM',
-    '03:00 PM',
-    '04:00 PM',
-    '05:00 PM',
-    '06:00 PM',
-    '07:00 PM'
-  ];
+  useEffect(() => {
+    const slots = [
+      '09:00 AM',
+      '10:00 AM',
+      '11:00 AM',
+      '12:00 PM',
+      '01:00 PM',
+      '02:00 PM',
+      '03:00 PM',
+      '04:00 PM',
+      '05:00 PM',
+      '06:00 PM',
+      '07:00 PM'
+    ];
+    setTimeSlots(slots);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setBookingData(prev => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value
     }));
@@ -54,138 +53,177 @@ const BookingForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.date || !formData.time) {
+      alert('Please select a date and time for your appointment.');
+      return;
+    }
+
     setLoading(true);
-    
+
     try {
-      const response = await submitBooking(bookingData);
+      const completeBookingData = {
+        ...bookingData,
+        ...formData
+      };
+      updateBookingData(formData);
+
+      const response = await submitBooking(completeBookingData);
+
       if (response.success) {
-        alert('Thank you for booking with us! We will confirm your appointment shortly.');
-        setBookingData({
-          service: '',
-          barber: '',
-          date: '',
-          time: '',
-          name: '',
-          email: '',
-          phone: ''
-        });
+        alert('Your appointment has been booked successfully! We will send you a confirmation email shortly.');
+        navigate('/booking/confirmation'); 
+      } else {
+        alert('There was an issue with your booking. Please try again.');
       }
     } catch (error) {
-      alert('Something went wrong. Please try again later.');
       console.error('Booking error:', error);
+      alert('An error occurred. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleBack = () => {
+    updateBookingData(formData);
+    navigate('/booking/barbers');
+  };
+
+  const today = new Date().toISOString().split('T')[0];
+
   return (
-    <div className="booking-form-container">
-      <h3>Book Your Appointment</h3>
-      <form className="booking-form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Select Service</label>
-          <select 
-            name="service" 
-            value={bookingData.service}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Choose a service</option>
-            {services.map((service, index) => (
-              <option key={index} value={service}>{service}</option>
-            ))}
-          </select>
+    <div className="booking-page">
+      <div className="container">
+        <div className="booking-header">
+          <h2>Book Your Appointment</h2>
+          <p>Complete your booking details</p>
         </div>
-        
-        <div className="form-group">
-          <label>Select Barber</label>
-          <select 
-            name="barber" 
-            value={bookingData.barber}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Choose a barber</option>
-            {barbers.map((barber, index) => (
-              <option key={index} value={barber}>{barber}</option>
-            ))}
-          </select>
+
+        <div className="booking-progress">
+          <div className="progress-step completed">1. Select Service</div>
+          <div className="progress-step completed">2. Choose Barber</div>
+          <div className="progress-step active">3. Book Appointment</div>
         </div>
-        
-        <div className="form-row">
-          <div className="form-group">
-            <label>Select Date</label>
-            <input 
-              type="date" 
-              name="date" 
-              value={bookingData.date}
-              onChange={handleChange}
-              required 
-            />
+
+        <div className="booking-summary">
+          <h3>Booking Summary</h3>
+          <div className="summary-details">
+            <div className="summary-item">
+              <span className="summary-label">Service:</span>
+              <span className="summary-value">{bookingData.service?.title}</span>
+              <span className="summary-price">{bookingData.service?.price}</span>
+            </div>
+            <div className="summary-item">
+              <span className="summary-label">Barber:</span>
+              <span className="summary-value">{bookingData.barber?.name}</span>
+              <span className="summary-position">{bookingData.barber?.position}</span>
+            </div>
           </div>
-          
+        </div>
+
+        <form className="booking-form" onSubmit={handleSubmit}>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="date">Select Date</label>
+              <input
+                type="date"
+                id="date"
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
+                min={today}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="time">Select Time</label>
+              <select
+                id="time"
+                name="time"
+                value={formData.time}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Choose a time</option>
+                {timeSlots.map((time, index) => (
+                  <option key={index} value={time}>{time}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="form-group">
-            <label>Select Time</label>
-            <select 
-              name="time" 
-              value={bookingData.time}
+            <label htmlFor="name">Your Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              placeholder="Enter your full name"
+              value={formData.name}
               onChange={handleChange}
               required
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="phone">Phone Number</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                placeholder="Enter your phone number"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="notes">Additional Notes (Optional)</label>
+            <textarea
+              id="notes"
+              name="notes"
+              placeholder="Any special requests or information we should know?"
+              value={formData.notes}
+              onChange={handleChange}
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div className="booking-actions">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleBack}
             >
-              <option value="">Choose a time</option>
-              {timeSlots.map((time, index) => (
-                <option key={index} value={time}>{time}</option>
-              ))}
-            </select>
+              Back
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+            >
+              {loading ? 'Processing...' : 'Confirm Booking'}
+            </button>
           </div>
-        </div>
-        
-        <div className="form-group">
-          <label>Your Name</label>
-          <input 
-            type="text" 
-            name="name" 
-            placeholder="Enter your name" 
-            value={bookingData.name}
-            onChange={handleChange}
-            required 
-          />
-        </div>
-        
-        <div className="form-row">
-          <div className="form-group">
-            <label>Your Email</label>
-            <input 
-              type="email" 
-              name="email" 
-              placeholder="Enter your email" 
-              value={bookingData.email}
-              onChange={handleChange}
-              required 
-            />
-          </div>
-          
-          <div className="form-group">
-            <label>Your Phone</label>
-            <input 
-              type="tel" 
-              name="phone" 
-              placeholder="Enter your phone number" 
-              value={bookingData.phone}
-              onChange={handleChange}
-              required 
-            />
-          </div>
-        </div>
-        
-        <Button 
-          type="primary" 
-          className="booking-btn" 
-          disabled={loading}
-        >
-          {loading ? 'Processing...' : 'Book Appointment'}
-        </Button>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

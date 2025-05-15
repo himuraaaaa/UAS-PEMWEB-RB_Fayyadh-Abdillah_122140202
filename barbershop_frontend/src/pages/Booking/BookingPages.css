@@ -473,3 +473,57 @@
     width: 100%;
   }
 }
+
+.booking-confirmation {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.confirmation-details {
+  background-color: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  margin-bottom: 40px;
+  text-align: left;
+}
+
+.confirmation-details h3 {
+  margin-bottom: 15px;
+  color: var(--dark-color);
+}
+
+.confirmation-details ul {
+  list-style: none;
+  padding: 0;
+}
+
+.confirmation-details li {
+  margin-bottom: 10px;
+  font-size: 1rem;
+  color: #555;
+}
+
+.payment-section {
+  background-color: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  margin-bottom: 40px;
+}
+
+.payment-section h3 {
+  margin-bottom: 15px;
+  color: var(--dark-color);
+}
+
+.qr-code {
+  margin: 20px 0;
+}
+
+.payment-instruction {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 20px;
+}

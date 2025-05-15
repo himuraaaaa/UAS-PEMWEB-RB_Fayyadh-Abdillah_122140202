@@ -1,29 +1,15 @@
-// src/routes/AppRoutes.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from '../pages/Home/Home';
 import Login from '../pages/Login/Login';
 import Register from '../pages/Register/Register';
 import ServiceSelection from '../pages/Booking/ServiceSelection';
 import BarberSelection from '../pages/Booking/BarberSelection';
 import BookingForm from '../pages/Booking/BookingForm';
+import BookingConfirmation from '../pages/Booking/BookingConfirmation';
 import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
-
-
-// Protected route component
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  const location = useLocation();
-
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return children;
-};
+import RequireAuth from './RequireAuth';
 
 const AppRoutes = () => {
   return (
@@ -33,34 +19,16 @@ const AppRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        
-        {/* Booking Flow */}
-        <Route 
-          path="/booking/services" 
-          element={
-            <ProtectedRoute>
-              <ServiceSelection />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/booking/barbers" 
-          element={
-            <ProtectedRoute>
-              <BarberSelection />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/booking/form" 
-          element={
-            <ProtectedRoute>
-              <BookingForm />
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Fallback route */}
+
+        {/* Protected booking routes */}
+        <Route element={<RequireAuth />}>
+          <Route path="/booking/services" element={<ServiceSelection />} />
+          <Route path="/booking/barbers" element={<BarberSelection />} />
+          <Route path="/booking/form" element={<BookingForm />} />
+          <Route path="/booking/confirmation" element={<BookingConfirmation />} />
+        </Route>
+
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Footer />

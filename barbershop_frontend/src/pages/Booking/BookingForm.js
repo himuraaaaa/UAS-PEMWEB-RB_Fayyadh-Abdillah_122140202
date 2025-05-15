@@ -1,4 +1,3 @@
-// src/pages/Booking/BookingForm.js (lanjutan)
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -77,7 +76,7 @@ const BookingForm = () => {
       
       if (response.success) {
         alert('Your appointment has been booked successfully! We will send you a confirmation email shortly.');
-        navigate('/');
+        navigate('/booking/confirmation');
       } else {
         alert('There was an issue with your booking. Please try again.');
       }
