@@ -1,3 +1,0 @@
-[run]
-source = Barbershop_Backend
-omit = Barbershop_Backend/test*
