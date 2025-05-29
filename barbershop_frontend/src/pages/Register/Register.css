@@ -10,7 +10,7 @@
 .register-container {
   display: flex;
   width: 100%;
-  max-width: 1000px;
+  max-width: 900px;
   background-color: white;
   border-radius: var(--border-radius-md);
   overflow: hidden;
@@ -56,7 +56,7 @@
 }
 
 .register-form-container {
-  flex: 1.2;
+  flex: 1;
   padding: var(--spacing-xl);
 }
 
@@ -67,13 +67,13 @@
   text-align: center;
 }
 
-.register-form .form-row {
-  display: flex;
-  gap: var(--spacing-md);
-}
-
-.register-form .form-row .form-group {
-  flex: 1;
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-md);
+  text-align: center;
 }
 
 .register-form .form-group {
@@ -129,6 +129,22 @@
   width: 100%;
   padding: 12px;
   font-size: 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.register-form .register-btn:hover {
+  background-color: var(--secondary-color);
+}
+
+.register-form .register-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .register-footer {
@@ -152,18 +168,11 @@
 @media (max-width: 992px) {
   .register-container {
     flex-direction: column;
-    max-width: 600px;
+    max-width: 500px;
   }
   
   .register-image {
     height: 200px;
-  }
-}
-
-@media (max-width: 768px) {
-  .register-form .form-row {
-    flex-direction: column;
-    gap: 0;
   }
 }
 

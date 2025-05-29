@@ -1,7 +1,5 @@
-// src/pages/Login/Login.js
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { login } from '../../api/authApi';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/Button/Button';
 import './Login.css';
@@ -16,8 +14,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login: authLogin } = useAuth();
-  
-  // Check if there's a redirect path in the URL (e.g., ?redirect=/booking/services)
+
   const searchParams = new URLSearchParams(location.search);
   const redirectPath = searchParams.get('redirect') || '/';
 
@@ -33,12 +30,25 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
+    // Debug: pastikan payload benar
+    console.log('Payload yang dikirim ke backend:', credentials);
+
+    if (!credentials.email || !credentials.password) {
+      setError('Email dan password wajib diisi.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await login(credentials);
-      if (response.success) {
-        authLogin(response.user, response.token);
-        navigate(redirectPath);
+      // Hanya panggil authLogin dari context!
+      const user = await authLogin(credentials);
+      if (user) {
+        if (user.is_admin) {
+          navigate('/admin');
+        } else {
+          navigate(redirectPath);
+        }
       } else {
         setError('Failed to log in. Please check your credentials.');
       }

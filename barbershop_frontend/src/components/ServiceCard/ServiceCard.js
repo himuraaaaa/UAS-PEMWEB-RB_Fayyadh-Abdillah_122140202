@@ -10,12 +10,9 @@ const ServiceCard = ({ service }) => {
   
   return (
     <div className="service-card">
-      <div className="service-icon">
-        <i className={`icon-${icon}`}></i>
-      </div>
-      <h3>{title}</h3>
+      <h2>{service.name || service.title}</h2>
       <p>{description}</p>
-      <div className="service-price">{price}</div>
+      <div className="service-price">${price}</div>
       {isAuthenticated ? (
         <Link to="/booking/services" className="service-btn">Book Now</Link>
       ) : (

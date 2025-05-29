@@ -1,2 +1,96 @@
-node_modules
-node_modules
+# Python Backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Node/React Frontend
+node_modules/
+/frontend/node_modules
+/frontend/build
+/frontend/dist
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+/frontend/.pnp
+/frontend/.pnp.js
+/frontend/coverage
+/frontend/.next
+/frontend/out
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+*.db
+*.sqlite3
+*.sqlite
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+/barbershop_frontend/node_modules
+/barbershop_frontend/.pnp
+/barbershop_frontend/.pnp.js
+
+# Testing
+/barbershop_frontend/coverage
+/barbershop_frontend/.nyc_output
+
+# Production
+/barbershop_frontend/build
+/barbershop_frontend/dist
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

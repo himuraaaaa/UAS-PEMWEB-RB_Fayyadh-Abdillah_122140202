@@ -1,15 +1,19 @@
 from pyramid.view import view_config
 from pyramid.response import Response
-from pyramid.httpexceptions import HTTPFound, HTTPNotFound, HTTPBadRequest, HTTPForbidden
+from pyramid.httpexceptions import HTTPFound, HTTPNotFound, HTTPBadRequest, HTTPForbidden, HTTPInternalServerError
 from sqlalchemy.exc import SQLAlchemyError
 from ..orms import User, Barber, Service, Appointment
 from ..schemas.user_schema import UserSchema, UserLoginSchema
 from ..schemas.barber_schema import BarberSchema, BarberUpdateSchema
-from ..schemas.service_schema import ServiceUpdateSchema
+from ..schemas.service_schema import ServiceUpdateSchema, ServiceSchema
+from ..schemas.appointment_schema import AppointmentCreateSchema, AppointmentUpdateSchema
 from ..utils.validation import validate_request
 from datetime import datetime
 import json
 import logging
+from marshmallow import ValidationError
+import os
+from ..utils.jwt import require_jwt
 
 log = logging.getLogger(__name__)
 
@@ -57,15 +61,19 @@ def login(request):
         log.error(f"Login error: {str(e)}")
         return {'status': 'error', 'message': str(e)}
 
+@view_config(route_name='api.auth.login', request_method='OPTIONS', renderer='json')
+def login_options(request):
+    return {}
+
 @view_config(route_name='api.auth.register', renderer='json', request_method='POST')
 def register(request):
-    # Validate request data
-    schema = UserSchema()
-    data, error = validate_request(schema, request)
-    if error:
-        return error
-
     try:
+        # Validate request data
+        schema = UserSchema()
+        data, error = validate_request(schema, request)
+        if error:
+            return error
+
         log.info(f"Attempting to register user with email: {data['email']}")
         
         # Check if user already exists
@@ -76,17 +84,27 @@ def register(request):
 
         # Create new user
         user = User(
-            username=data['username'],
             email=data['email'],
-            password=data['password']  # Password will be hashed in __init__
+            password=data['password'],
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+            phone_number=data.get('phone_number')
         )
         request.dbsession.add(user)
-        
-        # Commit the transaction to ensure data is saved
         request.dbsession.commit()
         
-        log.info(f"Successfully registered user: {user.username} with ID: {user.id}")
-        return {'status': 'success', 'user_id': user.id}
+        log.info(f"Successfully registered user: {user.email} with ID: {user.id}")
+        return {
+            'status': 'success',
+            'message': 'Registration successful',
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'phone_number': user.phone_number
+            }
+        }
     except SQLAlchemyError as e:
         log.error(f"Database error during registration: {str(e)}")
         request.dbsession.rollback()
@@ -100,6 +118,10 @@ def register(request):
         request.dbsession.rollback()
         return {'status': 'error', 'message': 'An unexpected error occurred'}
 
+@view_config(route_name='api.auth.register', request_method='OPTIONS', renderer='json')
+def register_options(request):
+    return {}
+
 # Barber Views
 @view_config(route_name='api.barbers', renderer='json', request_method='GET')
 def get_barbers(request):
@@ -108,6 +130,7 @@ def get_barbers(request):
         schema = BarberSchema(many=True)
         return {'status': 'success', 'data': schema.dump(barbers)}
     except Exception as e:
+        log.error(f"Error fetching barbers: {str(e)}")
         return {'status': 'error', 'message': str(e)}
 
 @view_config(route_name='api.barber', renderer='json', request_method='GET')
@@ -117,18 +140,19 @@ def get_barber(request):
         barber = request.dbsession.query(Barber).get(barber_id)
         if not barber:
             return HTTPNotFound()
-        return {'status': 'success', 'data': barber.to_dict()}
+        schema = BarberSchema()
+        return {'status': 'success', 'data': schema.dump(barber)}
     except Exception as e:
+        log.error(f"Error fetching barber: {str(e)}")
         return {'status': 'error', 'message': str(e)}
 
 @view_config(route_name='api.barber.create', renderer='json', request_method='POST')
 def create_barber(request):
-    # Periksa apakah user adalah admin
-    if not request.user.get('is_admin', False):
-        log.warning(f"Unauthorized attempt to create barber by user: {request.user.get('username', 'Unknown')}")
+    # Check if user is admin from JWT payload
+    if not request.jwt.get('is_admin', False):
+        log.warning(f"Unauthorized attempt to create barber")
         raise HTTPForbidden('Admin access required')
 
-    # Validate request data
     schema = BarberSchema()
     data, error = validate_request(schema, request)
     if error:
@@ -138,9 +162,9 @@ def create_barber(request):
         log.info(f"Attempting to create barber with name: {data['name']}")
         barber = Barber(
             name=data['name'],
-            email=data['email'],
-            phone=data.get('phone'),
-            bio=data.get('bio')
+            position=data['position'],
+            image=data['image'],
+            social=data.get('social')
         )
         request.dbsession.add(barber)
         request.dbsession.commit()
@@ -157,9 +181,9 @@ def create_barber(request):
 
 @view_config(route_name='api.barber.update', renderer='json', request_method='PUT')
 def update_barber(request):
-    # Periksa apakah user adalah admin
-    if not request.user.get('is_admin', False):
-        log.warning(f"Unauthorized attempt to update barber by user: {request.user.get('username', 'Unknown')}")
+    # Check if user is admin from JWT payload
+    if not request.jwt.get('is_admin', False):
+        log.warning(f"Unauthorized attempt to update barber")
         raise HTTPForbidden('Admin access required')
 
     barber_id = request.matchdict.get('id')
@@ -171,18 +195,16 @@ def update_barber(request):
         if not barber:
             raise HTTPNotFound('Barber not found')
 
-        # Validate request data using update schema
         schema = BarberUpdateSchema()
         data, error = validate_request(schema, request)
         if error:
             return error
 
-        # Update barber object with validated data
         for key, value in data.items():
             setattr(barber, key, value)
 
         request.dbsession.commit()
-        log.info(f"Successfully updated barber with ID: {barber_id} by admin: {request.user.get('username', 'Unknown')}")
+        log.info(f"Successfully updated barber with ID: {barber_id}")
         return {'status': 'success', 'message': 'Barber updated successfully'}
 
     except HTTPNotFound:
@@ -198,9 +220,9 @@ def update_barber(request):
 
 @view_config(route_name='api.barber.delete', renderer='json', request_method='DELETE')
 def delete_barber(request):
-    # Periksa apakah user adalah admin
-    if not request.user.get('is_admin', False):
-        log.warning(f"Unauthorized attempt to delete barber by user: {request.user.get('username', 'Unknown')}")
+    # Check if user is admin from JWT payload
+    if not request.jwt.get('is_admin', False):
+        log.warning(f"Unauthorized attempt to delete barber")
         raise HTTPForbidden('Admin access required')
 
     barber_id = request.matchdict.get('id')
@@ -214,7 +236,7 @@ def delete_barber(request):
 
         request.dbsession.delete(barber)
         request.dbsession.commit()
-        log.info(f"Successfully deleted barber with ID: {barber_id} by admin: {request.user.get('username', 'Unknown')}")
+        log.info(f"Successfully deleted barber with ID: {barber_id}")
         return {'status': 'success', 'message': 'Barber deleted successfully'}
 
     except HTTPNotFound:
@@ -233,71 +255,72 @@ def delete_barber(request):
 def get_services(request):
     try:
         services = request.dbsession.query(Service).all()
-        return {'status': 'success', 'data': [service.to_dict() for service in services]}
+        schema = ServiceSchema(many=True)
+        return {'status': 'success', 'data': schema.dump(services)}
     except Exception as e:
         log.error(f"Error fetching services: {str(e)}")
         return {'status': 'error', 'message': str(e)}
 
 @view_config(route_name='api.service', renderer='json', request_method='GET')
 def get_service(request):
-    """Get a single service by ID"""
     try:
         service_id = request.matchdict.get('id')
         if not service_id:
-             raise HTTPBadRequest('Service ID is required')
+            raise HTTPBadRequest('Service ID is required')
 
         service = request.dbsession.query(Service).get(service_id)
-
         if not service:
-            log.warning(f"Service with ID {service_id} not found")
             raise HTTPNotFound('Service not found')
 
-        log.info(f"Successfully fetched service with ID: {service_id}")
-        return {'status': 'success', 'data': service.to_dict()}
-
+        schema = ServiceSchema()
+        return {'status': 'success', 'data': schema.dump(service)}
     except HTTPNotFound:
-        request.dbsession.rollback()
         raise
     except HTTPBadRequest:
-        request.dbsession.rollback()
         raise
     except Exception as e:
-        log.error(f"Error fetching service {service_id}: {str(e)}")
-        request.dbsession.rollback()
-        return {'status': 'error', 'message': 'An error occurred while fetching the service'}
+        log.error(f"Error fetching service: {str(e)}")
+        return {'status': 'error', 'message': str(e)}
 
 @view_config(route_name='api.service.create', renderer='json', request_method='POST')
 def create_service(request):
-    # Periksa apakah user adalah admin
-    if not request.user.get('is_admin', False):
-        log.warning(f"Unauthorized attempt to create service by user: {request.user.get('username', 'Unknown')}")
+    # Check if user is admin from JWT payload
+    if not request.jwt.get('is_admin', False):
+        log.warning(f"Unauthorized attempt to create service")
         raise HTTPForbidden('Admin access required')
 
-    # Anda mungkin perlu membuat ServiceSchema untuk validasi input
-    # Sementara ini, kita akan langsung menggunakan request.json_body
+    schema = ServiceSchema()
+    data, error = validate_request(schema, request)
+    if error:
+        return error
+
     try:
-        data = request.json_body
-        log.info(f"Attempting to create service with name: {data.get('name')}")
+        log.info(f"Attempting to create service with name: {data['name']}")
         service = Service(
-            name=data.get('name'),
-            description=data.get('description'),
-            price=data.get('price'),
-            barber_id=data.get('barber_id') # Ambil barber_id dari data
+            name=data['name'],
+            description=data['description'],
+            duration=data['duration'],
+            price=data['price'],
+            image=data['image']
         )
         request.dbsession.add(service)
         request.dbsession.commit()
         log.info(f"Successfully created service with ID: {service.id}")
         return {'status': 'success', 'service_id': service.id}
-    except Exception as e:
-        log.error(f"Error creating service: {str(e)}")
+    except SQLAlchemyError as e:
+        log.error(f"Database error during service creation: {str(e)}")
         request.dbsession.rollback()
-        return {'status': 'error', 'message': str(e)}
+        return {'status': 'error', 'message': 'Database error occurred'}
+    except Exception as e:
+        log.error(f"Unexpected error during service creation: {str(e)}")
+        request.dbsession.rollback()
+        return {'status': 'error', 'message': 'An unexpected error occurred'}
 
 @view_config(route_name='api.service.update', renderer='json', request_method='PUT')
 def update_service(request):
-    # Periksa apakah user adalah admin
-    if not request.user.get('is_admin', False):
-        log.warning(f"Unauthorized attempt to update service by user: {request.user.get('username', 'Unknown')}")
+    # Check if user is admin from JWT payload
+    if not request.jwt.get('is_admin', False):
+        log.warning(f"Unauthorized attempt to update service")
         raise HTTPForbidden('Admin access required')
 
     service_id = request.matchdict.get('id')
@@ -309,22 +332,18 @@ def update_service(request):
         if not service:
             raise HTTPNotFound('Service not found')
 
-        # Validate request data using update schema
         schema = ServiceUpdateSchema()
         data, error = validate_request(schema, request)
         if error:
             return error
 
-        # Update service object with validated data
         for key, value in data.items():
-            # Pastikan hanya field yang diizinkan dalam schema update yang diupdate
             if hasattr(service, key):
-                 setattr(service, key, value)
+                setattr(service, key, value)
 
         request.dbsession.commit()
-        log.info(f"Successfully updated service with ID: {service_id} by admin: {request.user.get('username', 'Unknown')}")
+        log.info(f"Successfully updated service with ID: {service_id}")
         return {'status': 'success', 'message': 'Service updated successfully'}
-
     except HTTPNotFound:
         request.dbsession.rollback()
         raise
@@ -338,9 +357,9 @@ def update_service(request):
 
 @view_config(route_name='api.service.delete', renderer='json', request_method='DELETE')
 def delete_service(request):
-    # Periksa apakah user adalah admin
-    if not request.user.get('is_admin', False):
-        log.warning(f"Unauthorized attempt to delete service by user: {request.user.get('username', 'Unknown')}")
+    # Check if user is admin from JWT payload
+    if not request.jwt.get('is_admin', False):
+        log.warning(f"Unauthorized attempt to delete service")
         raise HTTPForbidden('Admin access required')
 
     service_id = request.matchdict.get('id')
@@ -354,9 +373,8 @@ def delete_service(request):
 
         request.dbsession.delete(service)
         request.dbsession.commit()
-        log.info(f"Successfully deleted service with ID: {service_id} by admin: {request.user.get('username', 'Unknown')}")
+        log.info(f"Successfully deleted service with ID: {service_id}")
         return {'status': 'success', 'message': 'Service deleted successfully'}
-
     except HTTPNotFound:
         request.dbsession.rollback()
         raise
@@ -372,43 +390,53 @@ def delete_service(request):
 @view_config(route_name='api.appointments', renderer='json', request_method='GET')
 def get_appointments(request):
     try:
-        # Cek apakah user adalah admin
-        if not request.user.get('is_admin', False):
-            # Jika bukan admin, hanya tampilkan appointment user tersebut
-            appointments = request.dbsession.query(Appointment).filter_by(user_id=request.user['user_id']).all()
+        if not request.jwt.get('is_admin', False):
+            appointments = request.dbsession.query(Appointment).filter_by(user_id=request.jwt['user_id']).all()
         else:
-            # Jika admin, tampilkan semua appointment
             appointments = request.dbsession.query(Appointment).all()
-            
-        return {'status': 'success', 'data': [appointment.to_dict() for appointment in appointments]}
+        # Kembalikan dengan .to_dict() agar field user_id selalu ada
+        return {'status': 'success', 'data': [apt.to_dict() for apt in appointments]}
     except Exception as e:
         log.error(f"Error getting appointments: {str(e)}")
         return {'status': 'error', 'message': str(e)}
 
 @view_config(route_name='api.appointment.create', renderer='json', request_method='POST')
 def create_appointment(request):
+    schema = AppointmentCreateSchema()
+    data, error = validate_request(schema, request)
+    if error:
+        return error
+
     try:
-        data = request.json_body
         log.info(f"Received data for appointment creation: {data}")
-        # Gunakan user_id dari token
         appointment = Appointment(
-            user_id=request.user['user_id'],  # Gunakan ID dari token
+            user_id=request.jwt['user_id'],
             barber_id=data['barber_id'],
             service_id=data['service_id'],
-            appointment_date=datetime.fromisoformat(data['appointment_date']),
+            appointment_date=data['appointment_date'],
+            notes=data.get('notes')
         )
         request.dbsession.add(appointment)
         request.dbsession.commit()
         log.info(f"Successfully created appointment with ID: {appointment.id}")
         return {'status': 'success', 'appointment_id': appointment.id}
-    except Exception as e:
-        log.error(f"Error creating appointment: {str(e)}")
+    except SQLAlchemyError as e:
+        log.error(f"Database Error creating appointment: {type(e).__name__} - {str(e)}")
         request.dbsession.rollback()
-        return {'status': 'error', 'message': str(e)}
+        raise HTTPInternalServerError({
+            'status': 'error',
+            'message': 'Database error occurred while creating the appointment'
+        })
+    except Exception as e:
+        log.error(f"Truly Unexpected Error creating appointment after validation: {type(e).__name__} - {str(e)}")
+        request.dbsession.rollback()
+        raise HTTPInternalServerError({
+            'status': 'error',
+            'message': 'An unexpected error occurred during appointment creation process'
+        })
 
 @view_config(route_name='api.appointment.update', renderer='json', request_method='PUT')
 def update_appointment(request):
-    """Update a specific appointment by ID"""
     appointment_id = request.matchdict.get('id')
     if not appointment_id:
         raise HTTPBadRequest('Appointment ID is required')
@@ -418,31 +446,21 @@ def update_appointment(request):
         if not appointment:
             raise HTTPNotFound('Appointment not found')
 
-        # Otorisasi: Hanya admin atau pemilik appointment yang bisa mengupdate
-        if not request.user.get('is_admin', False) and appointment.user_id != request.user.get('user_id'):
-             log.warning(f"Unauthorized attempt to update appointment {appointment_id} by user: {request.user.get('username', 'Unknown')}")
-             raise HTTPForbidden('You can only update your own appointments')
+        if not request.jwt.get('is_admin', False) and appointment.user_id != request.jwt['user_id']:
+            log.warning(f"Unauthorized attempt to update appointment {appointment_id}")
+            raise HTTPForbidden('You can only update your own appointments')
 
-        # TODO: Tambahkan validasi input menggunakan schema jika diperlukan
-        data = request.json_body
+        schema = AppointmentUpdateSchema()
+        data, error = validate_request(schema, request)
+        if error:
+            return error
 
-        # Update appointment fields (hanya field yang diizinkan diupdate oleh user)
-        # Admin bisa mengupdate semua field, user biasa mungkin terbatas
-        # Untuk saat ini, kita biarkan admin dan user biasa bisa mengupdate beberapa field yang sama
-        allowed_fields = ['barber_id', 'service_id', 'appointment_date'] # Contoh field yang diizinkan
-        for field, value in data.items():
-             if field in allowed_fields:
-                  if field == 'appointment_date':
-                       # Konversi string ISO 8601 ke datetime object
-                       setattr(appointment, field, datetime.fromisoformat(value))
-                  else:
-                       setattr(appointment, field, value)
-             # Jika admin, bisa update field lain jika ada (misal: status)
-             elif request.user.get('is_admin', False) and hasattr(appointment, field):
-                  setattr(appointment, field, value)
+        for key, value in data.items():
+            if hasattr(appointment, key):
+                setattr(appointment, key, value)
 
         request.dbsession.commit()
-        log.info(f"Successfully updated appointment with ID: {appointment_id} by user: {request.user.get('username', 'Unknown')}")
+        log.info(f"Successfully updated appointment with ID: {appointment_id}")
         return {'status': 'success', 'message': 'Appointment updated successfully'}
 
     except HTTPNotFound:
@@ -461,7 +479,6 @@ def update_appointment(request):
 
 @view_config(route_name='api.appointment.delete', renderer='json', request_method='DELETE')
 def delete_appointment(request):
-    """Delete a specific appointment by ID"""
     appointment_id = request.matchdict.get('id')
     if not appointment_id:
         raise HTTPBadRequest('Appointment ID is required')
@@ -471,14 +488,13 @@ def delete_appointment(request):
         if not appointment:
             raise HTTPNotFound('Appointment not found')
 
-        # Otorisasi: Hanya admin atau pemilik appointment yang bisa menghapus
-        if not request.user.get('is_admin', False) and appointment.user_id != request.user.get('user_id'):
-             log.warning(f"Unauthorized attempt to delete appointment {appointment_id} by user: {request.user.get('username', 'Unknown')}")
-             raise HTTPForbidden('You can only delete your own appointments')
+        if not request.jwt.get('is_admin', False) and appointment.user_id != request.jwt['user_id']:
+            log.warning(f"Unauthorized attempt to delete appointment {appointment_id}")
+            raise HTTPForbidden('You can only delete your own appointments')
 
         request.dbsession.delete(appointment)
         request.dbsession.commit()
-        log.info(f"Successfully deleted appointment with ID: {appointment_id} by user: {request.user.get('username', 'Unknown')}")
+        log.info(f"Successfully deleted appointment with ID: {appointment_id}")
         return {'status': 'success', 'message': 'Appointment deleted successfully'}
 
     except HTTPNotFound:
@@ -494,3 +510,119 @@ def delete_appointment(request):
         log.error(f"Error deleting appointment {appointment_id}: {str(e)}")
         request.dbsession.rollback()
         return {'status': 'error', 'message': 'An error occurred while deleting the appointment'}
+
+@view_config(route_name='api.appointment', renderer='json', request_method='GET')
+def get_appointment(request):
+    appointment_id = request.matchdict.get('id')
+    if not appointment_id:
+        raise HTTPBadRequest('Appointment ID is required')
+
+    try:
+        appointment = request.dbsession.query(Appointment).get(appointment_id)
+        if not appointment:
+            raise HTTPNotFound('Appointment not found')
+
+        if not request.jwt.get('is_admin', False) and appointment.user_id != request.jwt['user_id']:
+            log.warning(f"Unauthorized attempt to view appointment {appointment_id}")
+            raise HTTPForbidden('You can only view your own appointments')
+
+        schema = AppointmentCreateSchema()
+        return {'status': 'success', 'data': schema.dump(appointment)}
+
+    except HTTPNotFound:
+        request.dbsession.rollback()
+        raise
+    except HTTPBadRequest:
+        request.dbsession.rollback()
+        raise
+    except HTTPForbidden:
+        request.dbsession.rollback()
+        raise
+    except Exception as e:
+        log.error(f"Error retrieving appointment {appointment_id}: {str(e)}")
+        request.dbsession.rollback()
+        return {'status': 'error', 'message': 'An error occurred while retrieving the appointment'}
+
+@view_config(route_name='api.appointment.update_status', renderer='json', request_method='PUT')
+def update_appointment_status(request):
+    # Check if user is admin from JWT payload
+    if not request.jwt.get('is_admin', False):
+        log.warning(f"Unauthorized attempt to update appointment status")
+        raise HTTPForbidden('Admin access required to update appointment status')
+
+    appointment_id = request.matchdict.get('id')
+    if not appointment_id:
+        raise HTTPBadRequest('Appointment ID is required')
+
+    try:
+        data = request.json_body
+        new_status = data.get('status')
+        if not new_status:
+            raise HTTPBadRequest('New status is required in the request body')
+
+        appointment = request.dbsession.query(Appointment).get(appointment_id)
+        if not appointment:
+            raise HTTPNotFound('Appointment not found')
+
+        appointment.status = new_status
+        request.dbsession.commit()
+        
+        log.info(f"Successfully updated status for appointment ID: {appointment_id} to '{new_status}'")
+        return {'status': 'success', 'message': 'Appointment status updated successfully'}
+
+    except HTTPNotFound:
+        request.dbsession.rollback()
+        raise
+    except HTTPBadRequest:
+        request.dbsession.rollback()
+        raise
+    except HTTPForbidden:
+        request.dbsession.rollback()
+        raise
+    except Exception as e:
+        log.error(f"Error updating appointment status {appointment_id}: {str(e)}")
+        request.dbsession.rollback()
+        return {'status': 'error', 'message': 'An error occurred while updating the appointment status'}
+
+@view_config(route_name='api.upload', renderer='json', request_method='POST')
+@require_jwt
+def upload_file(request):
+    try:
+        # Check if file is in request
+        if 'file' not in request.POST:
+            return {'status': 'error', 'message': 'No file uploaded'}
+
+        file = request.POST['file'].file
+        filename = request.POST['file'].filename
+
+        # Validate file extension
+        if not filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+            return {'status': 'error', 'message': 'Invalid file format. Only JPG, JPEG, and PNG are allowed'}
+
+        # Create assets/barbers directory if it doesn't exist
+        upload_dir = os.path.join('barbershop_backend', 'barbershop_backend', 'assets', 'barbers')
+        os.makedirs(upload_dir, exist_ok=True)
+
+        # Save file
+        file_path = os.path.join(upload_dir, filename)
+        with open(file_path, 'wb') as f:
+            f.write(file.read())
+
+        return {'status': 'success', 'filename': filename}
+    except Exception as e:
+        log.error(f"Error uploading file: {str(e)}")
+        return {'status': 'error', 'message': str(e)}
+
+@view_config(route_name='api.users', renderer='json', request_method='GET')
+def get_users(request):
+    # Hanya admin yang boleh akses
+    if not request.jwt.get('is_admin', False):
+        log.warning(f"Unauthorized attempt to fetch all users")
+        raise HTTPForbidden('Admin access required')
+    try:
+        users = request.dbsession.query(User).all()
+        schema = UserSchema(many=True)
+        return {'status': 'success', 'data': schema.dump(users)}
+    except Exception as e:
+        log.error(f"Error fetching users: {str(e)}")
+        return {'status': 'error', 'message': str(e)}

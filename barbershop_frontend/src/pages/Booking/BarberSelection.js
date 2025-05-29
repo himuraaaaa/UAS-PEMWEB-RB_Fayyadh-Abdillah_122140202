@@ -2,14 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { getBarbers } from '../../api/barberApi';
+import api from '../../api';
 import './BookingPages.css';
+
+const BACKEND_URL = "http://localhost:6543";
 
 const BarberSelection = () => {
   const [barbers, setBarbers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBarber, setSelectedBarber] = useState(null);
-  const { bookingData, updateBookingData } = useAuth();
+  const auth = useAuth();
+  console.log('useAuth() result:', auth);
+  const bookingData = auth?.bookingData || {};
+  const updateBookingData = auth?.updateBookingData || (() => {});
   const navigate = useNavigate();
 
   // Check if service is selected
@@ -20,24 +25,23 @@ const BarberSelection = () => {
   }, [bookingData.service, navigate]);
 
   // Fetch barbers (simulated)
-useEffect(() => {
-  const fetchBarbers = async () => {
-    try {
-      const data = await getBarbers();
-      setBarbers(data);
-      if (bookingData.barber) {
-        setSelectedBarber(bookingData.barber);
+  useEffect(() => {
+    const fetchBarbers = async () => {
+      try {
+        const response = await api.get('/api/barbers');
+        setBarbers(response.data?.data || []);
+        if (bookingData.barber) {
+          setSelectedBarber(bookingData.barber);
+        }
+      } catch (error) {
+        console.error('Error fetching barbers:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching barbers:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchBarbers();
-}, [bookingData.barber]);
-
+    fetchBarbers();
+  }, [bookingData.barber]);
 
   const handleBarberSelect = (barber) => {
     setSelectedBarber(barber);
@@ -84,7 +88,7 @@ useEffect(() => {
           <h3>Selected Service:</h3>
           <div className="service-info">
             <span className="service-name">{bookingData.service?.title}</span>
-            <span className="service-price">{bookingData.service?.price}</span>
+            <span className="service-price">${bookingData.service?.price}</span>
           </div>
         </div>
         
@@ -96,7 +100,11 @@ useEffect(() => {
               onClick={() => handleBarberSelect(barber)}
             >
               <div className="barber-image">
-                <img src={barber.image} alt={barber.name} />
+                <img 
+                  src={barber.image && !barber.image.startsWith('http') ? `${BACKEND_URL}/assets/barbers/${barber.image}` : barber.image} 
+                  alt={barber.name} 
+                  style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
+                />
                 <div className="barber-social">
                   <a href={barber.social.instagram} target="_blank" rel="noopener noreferrer">
                     <i className="fab fa-instagram"></i>
@@ -106,10 +114,6 @@ useEffect(() => {
               <div className="barber-info">
                 <h3>{barber.name}</h3>
                 <p className="barber-position">{barber.position}</p>
-                <div className="barber-details">
-                  <p><strong>Expertise:</strong> {barber.expertise}</p>
-                  <p><strong>Experience:</strong> {barber.experience}</p>
-                </div>
               </div>
               {selectedBarber && selectedBarber.id === barber.id && (
                 <div className="selected-badge">

@@ -1,6 +1,10 @@
 from marshmallow import ValidationError
 from pyramid.response import Response
+from pyramid.httpexceptions import HTTPBadRequest, HTTPInternalServerError
 import json
+import logging
+
+log = logging.getLogger(__name__)
 
 def validate_request(schema, request):
     """
@@ -25,24 +29,16 @@ def validate_request(schema, request):
         return validated_data, None
 
     except ValidationError as err:
-        error_response = Response(
-            json.dumps({
-                'status': 'error',
-                'message': 'Validation error',
-                'errors': err.messages
-            }),
-            status=400,
-            content_type='application/json'
-        )
-        return None, error_response
+        log.warning(f"Validation error: {err.messages}")
+        raise HTTPBadRequest(json_body={
+            'status': 'error',
+            'message': 'Validation error',
+            'errors': err.messages
+        })
 
     except Exception as e:
-        error_response = Response(
-            json.dumps({
-                'status': 'error',
-                'message': str(e)
-            }),
-            status=500,
-            content_type='application/json'
-        )
-        return None, error_response 
+        log.error(f"Error during request validation: {type(e).__name__} - {str(e)}")
+        raise HTTPInternalServerError({
+             'status': 'error',
+             'message': 'Internal server error during validation'
+        }) 

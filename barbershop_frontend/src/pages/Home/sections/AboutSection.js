@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import BarberProfile from '../../../components/BarberProfile/BarberProfile';
-import { getBarbers } from '../../../api/barberApi';
+import api from '../../../api';
 
 const AboutSection = () => {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -9,8 +9,8 @@ const AboutSection = () => {
   useEffect(() => {
     const fetchBarbers = async () => {
       try {
-        const data = await getBarbers();
-        setTeamMembers(data);
+        const response = await api.get('/api/barbers');
+        setTeamMembers(response.data?.data || []);
       } catch (error) {
         console.error('Error fetching barbers:', error);
       } finally {

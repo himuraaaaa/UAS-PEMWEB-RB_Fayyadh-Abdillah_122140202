@@ -6,6 +6,7 @@ import './BookingPages.css';
 
 const BookingForm = () => {
   const { bookingData, updateBookingData, currentUser } = useAuth();
+  console.log('bookingData.service:', bookingData.service);
   const [formData, setFormData] = useState({
     date: bookingData.date || '',
     time: bookingData.time || '',
@@ -53,6 +54,16 @@ const BookingForm = () => {
     }));
   };
 
+  // Fungsi konversi waktu 12 jam ke 24 jam (HH:MM:SS)
+  function convertTo24Hour(time12h) {
+    if (!time12h) return '';
+    const [time, modifier] = time12h.split(' ');
+    let [hours, minutes] = time.split(':');
+    if (hours === '12') hours = '00';
+    if (modifier === 'PM') hours = String(parseInt(hours, 10) + 12);
+    return `${hours.padStart(2, '0')}:${minutes}:00`;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -71,10 +82,17 @@ const BookingForm = () => {
       };
       updateBookingData(formData);
       
+      // Transform payload sesuai backend
+      const payload = {
+        service_id: completeBookingData.service?.id,
+        barber_id: completeBookingData.barber?.id,
+        appointment_date: new Date(completeBookingData.date + 'T' + convertTo24Hour(completeBookingData.time)).toISOString(),
+        notes: completeBookingData.notes,
+      };
       // Submit booking to API
-      const response = await submitBooking(completeBookingData);
+      const response = await submitBooking(payload);
       
-      if (response.success) {
+      if (response.status === 'success') {
         alert('Your appointment has been booked successfully! We will send you a confirmation email shortly.');
         navigate('/booking/confirmation');
       } else {
@@ -116,7 +134,7 @@ const BookingForm = () => {
           <div className="summary-details">
             <div className="summary-item">
               <span className="summary-label">Service:</span>
-              <span className="summary-value">{bookingData.service?.title}</span>
+              <span className="summary-value">{bookingData.service?.name}</span>
               <span className="summary-price">{bookingData.service?.price}</span>
             </div>
             <div className="summary-item">

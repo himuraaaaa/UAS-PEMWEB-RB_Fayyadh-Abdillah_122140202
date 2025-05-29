@@ -1,29 +1,8 @@
 // src/api/serviceApi.js
-export const getServices = async () => {
-  // Simulasi delay
-  await new Promise(resolve => setTimeout(resolve, 300));
+import api from './index';
 
-  return [
-    {
-      id: 1,
-      title: 'Classic Haircut',
-      description: 'A timeless haircut for all occasions.',
-      price: '$20',
-      icon: 'scissors'
-    },
-    {
-      id: 2,
-      title: 'Modern Fade',
-      description: 'Trendy fade haircut with sharp lines.',
-      price: '$25',
-      icon: 'fade'
-    },
-    {
-      id: 3,
-      title: 'Beard Trim',
-      description: 'Professional beard shaping and trimming.',
-      price: '$15',
-      icon: 'beard'
-    }
-  ];
-};
+export const getServices = () => api.get('/api/services');
+export const getService = (id) => api.get(`/api/service/${id}`);
+export const createService = (serviceData) => api.post('/api/service/create', serviceData);
+export const updateService = (id, serviceData) => api.put(`/api/service/update/${id}`, serviceData);
+export const deleteService = (id) => api.delete(`/api/service/delete/${id}`);

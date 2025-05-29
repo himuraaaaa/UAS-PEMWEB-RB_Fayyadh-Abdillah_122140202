@@ -9,10 +9,11 @@ const ServicesSection = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const data = await getServices();
-        setServices(data);
+        const response = await getServices();
+        setServices(response.data?.data || []);
       } catch (error) {
         console.error('Error fetching services:', error);
+        setServices([]);
       } finally {
         setLoading(false);
       }

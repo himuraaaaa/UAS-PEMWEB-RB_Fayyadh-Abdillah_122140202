@@ -1,78 +1,83 @@
-// src/contexts/AuthContext.js
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { login as apiLogin } from '../api';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [bookingData, setBookingData] = useState({
-    service: null,
-    barber: null,
-    date: '',
-    time: '',
-    name: '',
-    email: '',
-    phone: ''
-  });
 
-  // Check if user is logged in on initial load
+  // Tambahkan bookingData state
+  const [bookingData, setBookingData] = useState({});
+  const updateBookingData = (newData) => {
+    setBookingData(prev => ({ ...prev, ...newData }));
+  };
+
   useEffect(() => {
+    // Ambil token dan user dari localStorage saat pertama kali load
     const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    
-    if (token && user) {
+    const storedUser = localStorage.getItem('user');
+    if (token && storedUser && storedUser !== "undefined") {
       try {
-        setCurrentUser(JSON.parse(user));
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('token');
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error('Error parsing stored user:', e);
+        setUser(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
+    } else {
+      setUser(null);
     }
-    
     setLoading(false);
   }, []);
 
-  // Login function
-  const login = (userData, token) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setCurrentUser(userData);
+  // Login: simpan token dan user ke localStorage
+  const login = async (credentials) => {
+    try {
+      console.log('Attempting login with credentials:', credentials);
+      const response = await apiLogin(credentials);
+      console.log('Login response:', response);
+      
+      const { token, user } = response.data;
+      if (!token || !user) {
+        throw new Error('Invalid response from server');
+      }
+
+      // Simpan ke localStorage agar tetap login setelah refresh
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      setUser(user);
+      return user;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
-  // Logout function
+  // Logout: hapus token dan user dari localStorage
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setCurrentUser(null);
-    // Reset booking data on logout
-    setBookingData({
-      service: null,
-      barber: null,
-      date: '',
-      time: '',
-      name: '',
-      email: '',
-      phone: ''
-    });
-  };
-
-  // Update booking data
-  const updateBookingData = (data) => {
-    setBookingData(prev => ({
-      ...prev,
-      ...data
-    }));
+    setUser(null);
   };
 
   const value = {
-    currentUser,
+    user,
+    loading,
     login,
     logout,
-    isAuthenticated: !!currentUser,
+    isAuthenticated: !!user,
+    isAdmin: user?.is_admin || false,
     bookingData,
     updateBookingData
   };
@@ -83,3 +88,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthContext;

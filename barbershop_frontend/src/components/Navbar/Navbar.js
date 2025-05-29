@@ -4,10 +4,12 @@ import { Link as ScrollLink } from 'react-scroll';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './Navbar.css';
+import { UserOutlined } from '@ant-design/icons';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const { isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const isHomePage = location.pathname === '/';
@@ -27,6 +29,21 @@ const Navbar = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+    function handleClickOutside(event) {
+      const dropdown = document.querySelector('.profile-dropdown');
+      const btn = document.querySelector('.profile-btn');
+      if (dropdown && !dropdown.contains(event.target) && btn && !btn.contains(event.target)) {
+        setProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [profileMenuOpen]);
+
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
@@ -37,6 +54,16 @@ const Navbar = () => {
     if (location.pathname !== '/') {
       window.location.href = '/';
     }
+  };
+
+  const handleProfileClick = () => {
+    setProfileMenuOpen(!profileMenuOpen);
+  };
+
+  const handleMyAppointments = () => {
+    setProfileMenuOpen(false);
+    setMenuOpen(false);
+    window.location.href = '/appointments';
   };
 
   return (
@@ -115,10 +142,16 @@ const Navbar = () => {
           </li>
           
           {isAuthenticated ? (
-            <li className="nav-item login">
-              <button onClick={handleLogout} className="logout-btn">
-                Logout
+            <li className="nav-item profile-menu">
+              <button className="profile-btn" onClick={handleProfileClick}>
+                <UserOutlined style={{ fontSize: 20 }} />
               </button>
+              {profileMenuOpen && (
+                <div className="profile-dropdown">
+                  <button onClick={handleMyAppointments} className="dropdown-item">My Appointments</button>
+                  <button onClick={handleLogout} className="dropdown-item">Logout</button>
+                </div>
+              )}
             </li>
           ) : (
             <li className="nav-item login">

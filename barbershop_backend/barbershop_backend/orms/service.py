@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Integer, ForeignKey
+from sqlalchemy import Column, String, Float, Integer
 from sqlalchemy.orm import relationship
 from .base import BaseModel
 
@@ -10,25 +10,21 @@ class Service(BaseModel):
     description = Column(String(500))
     duration = Column(Integer)  # Duration in minutes
     price = Column(Float, nullable=False)
-    barber_id = Column(Integer, ForeignKey('barbers.id'))
+    image = Column(String(255), nullable=False)
 
     # Relationships
-    barber = relationship("Barber", back_populates="services")
     appointments = relationship("Appointment", back_populates="service")
 
-    def __init__(self, name, price, barber_id, description=None, duration=None):
+    def __init__(self, name, price, image, description=None, duration=None):
         self.name = name
         self.price = price
-        self.barber_id = barber_id
+        self.image = image
         self.description = description
         self.duration = duration
 
     def to_dict(self):
         """Convert service instance to dictionary, avoiding recursion"""
         data = super().to_dict()
-        # Add related data
-        if self.barber:
-            data['barber_id'] = self.barber.id
         return data
 
     @classmethod

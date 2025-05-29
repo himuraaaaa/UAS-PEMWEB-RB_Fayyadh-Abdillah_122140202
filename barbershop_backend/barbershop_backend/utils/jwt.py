@@ -2,6 +2,8 @@ import jwt
 from datetime import datetime, timedelta
 from pyramid.settings import asbool
 import logging
+from functools import wraps
+from pyramid.httpexceptions import HTTPUnauthorized
 
 log = logging.getLogger(__name__)
 
@@ -67,6 +69,36 @@ class JWTManager:
         except jwt.InvalidTokenError as e:
             log.error(f"Invalid JWT token: {str(e)}")
             raise
+
+def require_jwt(view_func):
+    """
+    Decorator to require JWT authentication for a view
+    
+    Args:
+        view_func: The view function to decorate
+        
+    Returns:
+        function: Decorated view function
+    """
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+        # Skip authentication for OPTIONS requests
+        if request.method == 'OPTIONS':
+            return view_func(request, *args, **kwargs)
+            
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            raise HTTPUnauthorized('No valid authorization header')
+            
+        token = auth_header.split(' ')[1]
+        try:
+            payload = request.jwt_manager.verify_token(token)
+            request.jwt = payload
+            return view_func(request, *args, **kwargs)
+        except jwt.InvalidTokenError as e:
+            raise HTTPUnauthorized(str(e))
+            
+    return wrapped_view
 
 def includeme(config):
     """Pyramid configuration function"""

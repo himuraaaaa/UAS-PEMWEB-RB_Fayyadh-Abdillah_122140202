@@ -9,21 +9,24 @@ const ServiceSelection = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
-  const { bookingData, updateBookingData } = useAuth();
+  const auth = useAuth();
+  console.log('useAuth() result:', auth);
+  const bookingData = auth?.bookingData || {};
+  const updateBookingData = auth?.updateBookingData || (() => {});
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const data = await getServices();
-        setServices(data);
-        
+        const response = await getServices();
+        setServices(response.data?.data || []);
         // If there's already a selected service in the context, select it
         if (bookingData.service) {
           setSelectedService(bookingData.service);
         }
       } catch (error) {
         console.error('Error fetching services:', error);
+        setServices([]);
       } finally {
         setLoading(false);
       }
@@ -76,12 +79,9 @@ const ServiceSelection = () => {
               className={`service-card ${selectedService && selectedService.id === service.id ? 'selected' : ''}`}
               onClick={() => handleServiceSelect(service)}
             >
-              <div className="service-icon">
-                <i className={`icon-${service.icon}`}></i>
-              </div>
-              <h3>{service.title}</h3>
+              <h2>{service.name || service.title}</h2>
               <p>{service.description}</p>
-              <div className="service-price">{service.price}</div>
+              <div className="service-price">${service.price}</div>
               {selectedService && selectedService.id === service.id && (
                 <div className="selected-badge">
                   <i className="fas fa-check"></i>

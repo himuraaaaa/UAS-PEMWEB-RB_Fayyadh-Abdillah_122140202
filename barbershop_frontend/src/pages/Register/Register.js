@@ -1,6 +1,7 @@
 // src/pages/Register/Register.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { register } from '../../api';
 import Button from '../../components/Button/Button';
 import './Register.css';
 
@@ -25,30 +26,65 @@ const Register = () => {
     }));
   };
 
+  const validateForm = () => {
+    if (!formData.firstName || !formData.lastName) {
+      setError('First name and last name are required');
+      return false;
+    }
+    if (formData.firstName.length < 1 || formData.lastName.length < 1) {
+      setError('First name and last name must be at least 1 character long');
+      return false;
+    }
+    if (formData.firstName.length > 50 || formData.lastName.length > 50) {
+      setError('First name and last name must be less than 50 characters');
+      return false;
+    }
+    if (!formData.email.includes('@')) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    if (formData.phone && !formData.phone.match(/^\d{10,13}$/)) {
+      setError('Please enter a valid phone number (10-13 digits)');
+      return false;
+    }
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return false;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
-    // Basic validation
-    if (formData.password !== formData.confirmPassword) {
-      return setError('Passwords do not match');
+    if (!validateForm()) {
+      return;
     }
-    
+
     setLoading(true);
-    
-    // Simulate API call
     try {
-      // In a real app, you would call your registration API here
-      console.log('Registration data:', formData);
-      
-      // Simulate successful registration
-      setTimeout(() => {
-        alert('Registration successful! Please check your email to verify your account.');
+      const response = await register({
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        phone_number: formData.phone,
+        password: formData.password,
+        confirm_password: formData.confirmPassword
+      });
+
+      if (response.status === 'success') {
         navigate('/login');
-      }, 1500);
-    } catch (error) {
-      setError('An error occurred during registration. Please try again.');
-      console.error('Registration error:', error);
+      } else {
+        setError(response.message || 'Registration failed');
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred during registration');
+    } finally {
       setLoading(false);
     }
   };
@@ -59,108 +95,84 @@ const Register = () => {
         <div className="register-image">
           <img src="/assets/images/barber-bg.jpg" alt="Barbershop" />
           <div className="register-overlay">
-            <h2>Join Our Community</h2>
-            <p>Register to get exclusive offers and easy booking for your barbershop visits</p>
+            <h2>Join Us</h2>
+            <p>Create an account to book your premium barbershop experience</p>
           </div>
         </div>
         
         <div className="register-form-container">
-          <h2>Create an Account</h2>
+          <h2>Register</h2>
           {error && <div className="error-message">{error}</div>}
-          
           <form className="register-form" onSubmit={handleSubmit}>
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="firstName">First Name</label>
-                <input 
-                  type="text" 
-                  id="firstName"
-                  name="firstName" 
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  required 
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="lastName">Last Name</label>
-                <input 
-                  type="text" 
-                  id="lastName"
-                  name="lastName" 
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required 
-                />
-              </div>
+            <div className="form-group">
+              <label htmlFor="firstName">First Name</label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+              />
             </div>
-            
+            <div className="form-group">
+              <label htmlFor="lastName">Last Name</label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+              />
+            </div>
             <div className="form-group">
               <label htmlFor="email">Email</label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 id="email"
-                name="email" 
+                name="email"
                 value={formData.email}
                 onChange={handleChange}
-                required 
+                required
               />
             </div>
-            
             <div className="form-group">
-              <label htmlFor="phone">Phone Number</label>
-              <input 
-                type="tel" 
+              <label htmlFor="phone">Phone Number (optional)</label>
+              <input
+                type="tel"
                 id="phone"
-                name="phone" 
+                name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                required 
               />
             </div>
-            
             <div className="form-group">
               <label htmlFor="password">Password</label>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 id="password"
-                name="password" 
+                name="password"
                 value={formData.password}
                 onChange={handleChange}
-                required 
-                minLength="8"
+                required
               />
             </div>
-            
             <div className="form-group">
               <label htmlFor="confirmPassword">Confirm Password</label>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 id="confirmPassword"
-                name="confirmPassword" 
+                name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                required 
-                minLength="8"
+                required
               />
             </div>
-            
-            <div className="form-agreement">
-              <input type="checkbox" id="terms" required />
-              <label htmlFor="terms">
-                I agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>
-              </label>
-            </div>
-            
-            <Button 
-              type="primary" 
-              className="register-btn" 
-              disabled={loading}
-            >
+            <Button type="submit" className="register-btn" disabled={loading}>
               {loading ? 'Registering...' : 'Register'}
             </Button>
           </form>
-          
           <div className="register-footer">
             <p>Already have an account? <a href="/login">Login</a></p>
           </div>
