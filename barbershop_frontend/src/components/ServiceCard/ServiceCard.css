@@ -1,37 +1,34 @@
+/* src/components/ServiceCard/ServiceCard.css */
 .service-card {
   background-color: white;
-  border-radius: var(--border-radius-md);
+  border-radius: 10px;
   padding: 30px;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 350px; /* Tinggi minimum untuk konsistensi */
 }
 
 .service-card:hover {
   transform: translateY(-10px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
 }
 
-.service-icon {
-  width: 70px;
-  height: 70px;
-  background-color: rgba(179, 75, 12, 0.1);
-  border-radius: 50%;
+.service-content {
+  flex: 1; /* Mengambil ruang yang tersedia */
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
+  flex-direction: column;
+  margin-bottom: 20px;
 }
 
-.service-icon i {
-  font-size: 30px;
-  color: var(--primary-color);
-}
-
-.service-card h3 {
-  font-size: 1.3rem;
+.service-card h2 {
+  font-size: 1.5rem;
   color: var(--dark-color);
   margin-bottom: 15px;
+  font-weight: 600;
 }
 
 .service-card p {
@@ -39,26 +36,51 @@
   margin-bottom: 20px;
   font-size: 0.95rem;
   line-height: 1.6;
+  flex-grow: 1; /* Membuat paragraf mengambil ruang yang tersedia */
 }
 
 .service-price {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--primary-color);
-  margin-bottom: 20px;
+  margin-bottom: 5px;
+}
+
+.service-btn-container {
+  margin-top: auto; /* Mendorong container tombol ke bawah */
 }
 
 .service-btn {
   display: inline-block;
-  padding: 10px 25px;
+  padding: 12px 25px;
   background-color: var(--primary-color);
   color: white;
   border-radius: 5px;
   text-decoration: none;
   font-weight: 600;
   transition: background-color 0.3s ease;
+  width: 100%; /* Tombol mengambil lebar penuh */
 }
 
 .service-btn:hover {
+  color: white;
   background-color: var(--secondary-color);
+}
+
+@media (max-width: 768px) {
+  .service-card {
+    min-height: 300px; /* Sedikit lebih pendek pada layar kecil */
+  }
+  
+  .service-card h2 {
+    font-size: 1.3rem;
+  }
+  
+  .service-price {
+    font-size: 1.2rem;
+  }
+  
+  .service-btn {
+    padding: 10px 20px;
+  }
 }

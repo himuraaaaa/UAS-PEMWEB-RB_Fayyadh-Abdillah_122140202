@@ -53,7 +53,7 @@ const BarberManagement = () => {
         message.error('Session expired. Please login again.');
         navigate('/login');
       } else {
-        message.error('Failed to fetch barbers');
+      message.error('Failed to fetch barbers');
       }
       setBarbers([]);
     } finally {
@@ -148,7 +148,7 @@ const BarberManagement = () => {
         message.error('Session expired. Please login again.');
         navigate('/login');
       } else {
-        message.error('Operation failed');
+      message.error('Operation failed');
       }
     } finally {
       setUploading(false);
@@ -168,7 +168,7 @@ const BarberManagement = () => {
         message.error('Session expired. Please login again.');
         navigate('/login');
       } else {
-        message.error('Failed to delete barber');
+      message.error('Failed to delete barber');
       }
     }
   };
@@ -211,11 +211,11 @@ const BarberManagement = () => {
         try {
           const socialData = typeof social === 'string' ? JSON.parse(social) : social;
           return (
-            <div>
+        <div>
               {Object.entries(socialData).map(([platform, handle]) => (
-                <div key={platform}>{`${platform}: ${handle}`}</div>
-              ))}
-            </div>
+            <div key={platform}>{`${platform}: ${handle}`}</div>
+          ))}
+        </div>
           );
         } catch (error) {
           return 'Invalid social media data';

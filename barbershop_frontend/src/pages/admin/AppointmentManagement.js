@@ -23,11 +23,16 @@ const AppointmentManagement = () => {
       const servicesData = servicesRes?.data?.data || [];
 
       // Mapping barber & service name
-      const mappedAppointments = appointmentsData.map(apt => ({
-        ...apt,
-        barber: barbersData.find(b => b.id === apt.barber_id) || null,
-        service: servicesData.find(s => s.id === apt.service_id) || null,
-      }));
+      const mappedAppointments = appointmentsData.map(apt => {
+        const dateObj = apt.appointment_date ? new Date(apt.appointment_date) : null;
+        return {
+          ...apt,
+          date: dateObj ? dateObj.toISOString().split('T')[0] : null,
+          time: dateObj ? dateObj.toTimeString().slice(0,5) : null,
+          barber: barbersData.find(b => b.id === apt.barber_id) || null,
+          service: servicesData.find(s => s.id === apt.service_id) || null,
+        };
+      });
       setAppointments(mappedAppointments);
       setBarbers(barbersData);
       setServices(servicesData);
@@ -72,12 +77,28 @@ const AppointmentManagement = () => {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
-      render: (date) => new Date(date).toLocaleDateString(),
+      render: (date) => {
+        if (!date) return 'N/A';
+        try {
+          return new Date(date).toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+        } catch (error) {
+          return 'Invalid Date';
+        }
+      },
     },
     {
       title: 'Time',
       dataIndex: 'time',
       key: 'time',
+      render: (time) => {
+        if (!time) return 'N/A';
+        // Assuming time is in format "HH:mm" or "HH:mm:ss"
+        return time.split(':').slice(0, 2).join(':');
+      },
     },
     {
       title: 'Barber',

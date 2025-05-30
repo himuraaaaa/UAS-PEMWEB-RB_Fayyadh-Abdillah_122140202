@@ -11,16 +11,16 @@ const api = axios.create({
 // Add request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token');
     console.log('Request interceptor - Token:', token);
     console.log('Request interceptor - URL:', config.url);
     console.log('Request interceptor - Method:', config.method);
     
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
       console.log('Request interceptor - Headers:', config.headers);
-    }
-    return config;
+  }
+  return config;
   },
   (error) => {
     console.error('Request interceptor error:', error);
