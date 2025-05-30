@@ -60,5 +60,6 @@
 }
 
 .service-btn:hover {
+  color: white;
   background-color: var(--secondary-color);
 }
