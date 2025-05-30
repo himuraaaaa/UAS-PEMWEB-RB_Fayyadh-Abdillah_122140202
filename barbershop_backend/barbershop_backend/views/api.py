@@ -68,11 +68,11 @@ def login_options(request):
 @view_config(route_name='api.auth.register', renderer='json', request_method='POST')
 def register(request):
     try:
-    # Validate request data
-    schema = UserSchema()
-    data, error = validate_request(schema, request)
-    if error:
-        return error
+        # Validate request data
+        schema = UserSchema()
+        data, error = validate_request(schema, request)
+        if error:
+            return error
 
         log.info(f"Attempting to register user with email: {data['email']}")
         
