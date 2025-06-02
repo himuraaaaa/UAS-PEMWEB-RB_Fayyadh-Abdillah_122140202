@@ -180,6 +180,8 @@
   margin-bottom: 50px;
 }
 
+/* Modifikasi untuk barber-card di src/pages/Booking/BookingPages.css */
+
 .barber-card {
   background-color: white;
   border-radius: 10px;
@@ -189,10 +191,14 @@
   cursor: pointer;
   position: relative;
   border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  height: 500px; /* Tinggi tetap untuk konsistensi */
+  margin-bottom: 30px;
 }
 
 .barber-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-10px);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
 }
 
@@ -203,7 +209,7 @@
 
 .barber-image {
   position: relative;
-  height: 250px;
+  height: 380px; /* Lebih tinggi untuk menampilkan lebih banyak foto */
   overflow: hidden;
 }
 
@@ -211,6 +217,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 15%; /* Sedikit ke atas untuk fokus pada wajah dan tubuh bagian atas */
   transition: transform 0.5s ease;
 }
 
@@ -218,51 +225,151 @@
   transform: scale(1.05);
 }
 
-.barber-social {
+/* Overlay gradien yang lebih halus */
+.barber-image::after {
+  content: '';
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: 15px;
-  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  height: 40%; /* Hanya menutupi bagian bawah */
+  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.barber-card:hover .barber-image::after {
+  opacity: 1;
+}
+
+.barber-social {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  width: 100%;
   display: flex;
   justify-content: center;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+}
+
+.barber-card:hover .barber-social {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .barber-social a {
   color: white;
-  font-size: 20px;
-  margin: 0 10px;
-  transition: transform 0.3s ease;
+  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 8px;
+  transition: all 0.3s ease;
 }
 
 .barber-social a:hover {
-  transform: scale(1.2);
+  transform: translateY(-5px);
+  background-color: var(--secondary-color);
 }
 
 .barber-info {
   padding: 20px;
+  background-color: white;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+
+/* Garis dekoratif di atas info */
+.barber-info::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background-color: var(--primary-color);
 }
 
 .barber-info h3 {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   color: var(--dark-color);
   margin-bottom: 5px;
+  font-weight: 600;
 }
 
 .barber-position {
   color: var(--primary-color);
   font-weight: 600;
   margin-bottom: 15px;
+  font-size: 1rem;
 }
 
 .barber-details {
   font-size: 0.9rem;
   color: #666;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, margin-top 0.3s ease;
+}
+
+.barber-card:hover .barber-details {
+  max-height: 100px; /* Tinggi maksimum saat hover */
+  margin-top: 15px;
 }
 
 .barber-details p {
   margin-bottom: 5px;
+  line-height: 1.5;
+}
+
+/* Badge untuk kartu yang dipilih */
+.selected-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 30px;
+  height: 30px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  z-index: 3;
+}
+
+/* Responsif */
+@media (max-width: 992px) {
+  .barbers-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .barber-card {
+    height: 450px;
+  }
+  
+  .barber-image {
+    height: 320px;
+  }
+  
+  .barbers-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
 }
 
 .selected-service-summary {

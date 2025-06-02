@@ -103,7 +103,6 @@ const BarberSelection = () => {
                 <img 
                   src={barber.image && !barber.image.startsWith('http') ? `${BACKEND_URL}/assets/barbers/${barber.image}` : barber.image} 
                   alt={barber.name} 
-                  style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
                 />
                 <div className="barber-social">
                   <a href={barber.social.instagram} target="_blank" rel="noopener noreferrer">

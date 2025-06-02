@@ -1,2 +1,19 @@
 [run]
 source = barbershop_backend
+omit = 
+    */tests/*
+    */alembic/*
+    */venv/*
+    */__init__.py
+    */migrations/*
+    */static/*
+    */templates/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+    raise ImportError

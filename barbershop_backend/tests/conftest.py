@@ -10,8 +10,8 @@ import transaction
 import webtest
 
 from barbershop_backend import main
-from barbershop_backend import models
-from barbershop_backend.models.meta import Base
+from barbershop_backend import database
+from barbershop_backend.orms import Base
 
 
 def pytest_addoption(parser):
@@ -28,7 +28,7 @@ def app_settings(ini_file):
 
 @pytest.fixture(scope='session')
 def dbengine(app_settings, ini_file):
-    engine = models.get_engine(app_settings)
+    engine = database.create_engine(app_settings['sqlalchemy.url'])
 
     alembic_cfg = alembic.config.Config(ini_file)
     Base.metadata.drop_all(bind=engine)
@@ -62,8 +62,8 @@ def tm():
 
 @pytest.fixture
 def dbsession(app, tm):
-    session_factory = app.registry['dbsession_factory']
-    return models.get_tm_session(session_factory, tm)
+    session_factory = database.sessionmaker(bind=app.registry['db'].engine)
+    return session_factory()
 
 @pytest.fixture
 def testapp(app, tm, dbsession):
